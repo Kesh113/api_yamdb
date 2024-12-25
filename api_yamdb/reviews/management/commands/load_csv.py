@@ -22,7 +22,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         category_file_path = options['category']
         comments_file_path = options['comments']
-        genre_title_file_path = options['пenre_title']
+        genre_title_file_path = options['genre_title']
         genre_file_path = options['genre']
         review_file_path = options['review']
         title_file_path = options['titles']

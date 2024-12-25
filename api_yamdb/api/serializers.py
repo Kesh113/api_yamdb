@@ -16,7 +16,8 @@ class GenreSerializer(serializers.ModelSerializer):
 
 
 class TitleSerializer(serializers.ModelSerializer):
-    rating = serializers.IntegerField(source='reviews__score__avg')
+    rating = serializers.IntegerField(source='reviews__score__avg',
+                                      read_only=True)
     genre = serializers.SlugRelatedField(
         many=True,
         slug_field='slug',
