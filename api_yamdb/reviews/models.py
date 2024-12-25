@@ -7,6 +7,7 @@ from django.core.validators import (
 
 User = get_user_model()
 
+
 class Genre(models.Model):
     name = models.CharField(max_length=256)
     slug = models.SlugField(
@@ -39,6 +40,12 @@ class Title(models.Model):
     class Meta:
         default_related_name = 'titles'
         ordering = ('name',)
+
+
+class GenreTitle(models.Model):
+    title = models.ForeignKey(Title, on_delete=models.CASCADE)
+    genre = models.ForeignKey(Genre, on_delete=models.CASCADE)
+
 
 class Review(models.Model):
 
@@ -81,6 +88,7 @@ class Review(models.Model):
 
     def __str__(self):
         return self.text[:20]
+
 
 class Comment(models.Model):
 

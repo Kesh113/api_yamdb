@@ -1,10 +1,11 @@
 import csv
 from django.core.management.base import BaseCommand
-from reviews.models import Category
+from reviews.models import (Category, Comment, Genre,
+                            GenreTitle, Title, Review, User)
 
 
 class Command(BaseCommand):
-    help = 'Загрузка продуктов из CSV-файла'
+    help = 'Загрузка данных из CSV-файла'
 
     def add_arguments(self, parser):
         parser.add_argument('--category', type=str, help='Путь к category.csv')
@@ -117,7 +118,7 @@ class Command(BaseCommand):
             next(reader)
 
             for row in reader:
-                Review.objects.update_or_create(
+                User.objects.update_or_create(
                     id=row[0],
                     defaults={
                         'username': row[1],
