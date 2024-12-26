@@ -64,14 +64,14 @@ class TitleViewSet(viewsets.ModelViewSet):
 class ReviewViewSet(viewsets.ModelViewSet):
 
     serializer_class = ReviewSerializer
-    permission_classes = IsAdminModeratorAuthorOrReadOnly,
+    permission_classes = (IsAdminModeratorAuthorOrReadOnly,)
     http_method_names = (
         'get', 'post', 'patch', 'delete', 'head', 'options', 'trace'
     )
     pagination_class = PageNumberPagination
 
     def get_title(self):
-        title_id = self.kwargs.get('id')
+        title_id = self.kwargs.get('title_id')
         return get_object_or_404(Title, pk=title_id)
 
     def get_queryset(self):
@@ -86,7 +86,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
-    permission_classes = IsAdminModeratorAuthorOrReadOnly,
+    permission_classes = (IsAdminModeratorAuthorOrReadOnly,)
     http_method_names = (
         'get', 'post', 'patch', 'delete', 'head', 'options', 'trace'
     )
