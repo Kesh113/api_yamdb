@@ -1,15 +1,16 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
-from django.utils.crypto import get_random_string
-from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+from rest_framework_simplejwt.tokens import AccessToken
 
 from .constants import INVALID_CONFIRM_CODE, MESSAGE, SUBJECT, USER_NOT_FOUND
 from .serializers_users import (
-    UserConfirmationSerializer, UserCreateSerializer, UserUpdateSerializer
+    UserCreateSerializer, UserSignupSerializer, UserConfirmationSerializer
 )
 
 
@@ -17,39 +18,33 @@ User = get_user_model()
 
 
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def signup_or_update(request):
     # Сериализуем и валидируем полученные данные
     # без проверки уникальности полей
-    serializer = UserUpdateSerializer(data=request.data)
+    serializer = UserSignupSerializer(data=request.data)
 
-    if serializer.is_valid():
-        data = serializer.validated_data
-    else:
+    if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    # Генерируем код подтверждения
-    confirmation_code = get_random_string(length=30)
+    data = serializer.validated_data
 
     # Ищем пользователя в БД
     try:
         user = User.objects.get(**data)
-        # Если пользователь найден, обновляем код подтверждения
-        user.confirmation_code = confirmation_code
-        user.is_active = False
-        user.save()
     except User.DoesNotExist:
         # Если пользователь не найден, помещаем данные в сериализатор
         # и проверяем на соответствие полям модели
         serializer = UserCreateSerializer(data=data)
 
-        if serializer.is_valid():
-            serializer.save(
-                confirmation_code=confirmation_code, is_active=False
-            )
-        else:
+        if not serializer.is_valid():
             return Response(
                 serializer.errors, status=status.HTTP_400_BAD_REQUEST
             )
+        user = serializer.save()
+
+    # Генерируем код подтверждения и создаем для него токен
+    confirmation_code = default_token_generator.make_token(user)
 
     # Отправляем код подтверждения по электронной почте
     send_mail(
@@ -63,6 +58,7 @@ def signup_or_update(request):
 
 
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def confirmation(request):
     serializer = UserConfirmationSerializer(data=request.data)
     if serializer.is_valid():
@@ -76,20 +72,19 @@ def confirmation(request):
                 {'username': USER_NOT_FOUND},
                 status=status.HTTP_404_NOT_FOUND
             )
-        if user.confirmation_code != data['confirmation_code']:
+
+        if not default_token_generator.check_token(
+            user, request.data['confirmation_code']
+        ):
             return Response(
                 {'confirmation_code': INVALID_CONFIRM_CODE},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Меняем статус на активный (почта подтверждена)
-        user.is_active = True
-        user.save()
-
-        access_token = AccessToken.for_user(user)
+        token = AccessToken.for_user(user)
 
         return Response(
-            {'token': str(access_token)}, status=status.HTTP_200_OK
+            {'token': str(token)}, status=status.HTTP_200_OK
         )
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
