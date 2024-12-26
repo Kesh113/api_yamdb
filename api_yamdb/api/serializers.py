@@ -7,13 +7,13 @@ from reviews.models import Review, Comment, Category, Genre, Title
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = ['name', 'slug']
+        fields = 'name', 'slug'
 
 
 class GenreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Genre
-        fields = ['name', 'slug']
+        fields = 'name', 'slug'
 
 
 class TitleSerializer(serializers.ModelSerializer):
@@ -21,7 +21,8 @@ class TitleSerializer(serializers.ModelSerializer):
     genre = serializers.SlugRelatedField(
         many=True,
         slug_field='slug',
-        queryset=Genre.objects.all()
+        queryset=Genre.objects.all(),
+        allow_empty=False
     )
     category = serializers.SlugRelatedField(
         slug_field='slug',
@@ -30,19 +31,31 @@ class TitleSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Title
-        fields = ['id', 'name', 'year', 'rating',
-                  'description', 'genre', 'category']
+        fields = ('id', 'name', 'year', 'rating',
+                  'description', 'genre', 'category')
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+
+        # Получаем объект категории и сериализуем его
+        category = instance.category
+        representation['category'] = CategorySerializer(category).data
+
+        # Получаем объекты жанров и сериализуем их
+        genres = instance.genre.all()
+        representation['genre'] = GenreSerializer(genres, many=True).data
+
+        return representation
 
 
 class ReviewSerializer(serializers.ModelSerializer):
-
     author = serializers.SlugRelatedField(read_only=True,
                                           slug_field='username')
 
     class Meta:
         model = Review
         fields = '__all__'
-        read_only_fields = ('author', 'pub_date')
+        read_only_fields = 'author', 'pub_date'
 
     def validate(self, data):
         if self.context.get('request').method == 'POST':
@@ -60,5 +73,4 @@ class CommentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Comment
-        fields = ('id', 'author', 'text',
-                  'pub_date')
+        fields = 'id', 'author', 'text', 'pub_date'

@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, mixins, viewsets
 from rest_framework.pagination import PageNumberPagination
 
@@ -53,12 +54,12 @@ class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.annotate(rating=Avg('reviews__score'))
     serializer_class = TitleSerializer
     permission_classes = IsAdminOrReadOnly,
-    filter_backends = filters.SearchFilter,
+    filter_backends = DjangoFilterBackend,
     pagination_class = PageNumberPagination
-    search_fields = 'category', 'genre', 'name', 'year'
     http_method_names = (
         'get', 'post', 'patch', 'delete', 'head', 'options', 'trace'
     )
+    filterset_fields = 'genre__slug', 'category__slug', 'name', 'year'
 
 
 class ReviewViewSet(viewsets.ModelViewSet):

@@ -1,3 +1,4 @@
+from datetime import date
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.contrib.auth import get_user_model
@@ -50,11 +51,10 @@ class Category(models.Model):
 
 class Title(models.Model):
     name = models.CharField(max_length=256)
-    year = models.IntegerField()
-    description = models.TextField(
-        null=True,
-        blank=True
+    year = models.PositiveIntegerField(
+        validators=[MaxValueValidator(date.today().year)]
     )
+    description = models.TextField(blank=True)
     genre = models.ManyToManyField(Genre)
     category = models.ForeignKey(
         Category,
@@ -72,7 +72,6 @@ class GenreTitle(models.Model):
 
 
 class Review(models.Model):
-
     text = models.TextField(max_length=500)
     author = models.ForeignKey(
         User,
@@ -115,7 +114,6 @@ class Review(models.Model):
 
 
 class Comment(models.Model):
-
     text = models.TextField(max_length=500)
     author = models.ForeignKey(User,
                                on_delete=models.CASCADE,
