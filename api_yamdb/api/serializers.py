@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from .constants import ONLY_ONE_REVIEW
 from reviews.models import Review, Comment, Category, Genre, Title
 
 
@@ -33,6 +34,7 @@ class TitleSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'year', 'rating',
                   'description', 'genre', 'category']
 
+
 class ReviewSerializer(serializers.ModelSerializer):
 
     author = serializers.StringRelatedField(read_only=True)
@@ -46,9 +48,7 @@ class ReviewSerializer(serializers.ModelSerializer):
             author = self.context.get('request').user
             title_id = self.context.get('view').kwargs.get('title_id')
             if Review.objects.filter(author=author, title=title_id).exists():
-                raise serializers.ValidationError(
-                    'Можно оставить только один отзыв на произведение'
-                )
+                raise serializers.ValidationError(ONLY_ONE_REVIEW)
             return data
         return data
 

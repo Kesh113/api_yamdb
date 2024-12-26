@@ -1,6 +1,9 @@
 import csv
 from django.core.management.base import BaseCommand
-from reviews.models import Category, Comment, Genre, GenreTitle, Title, Review, User
+from api.constants import CSV_PATH, HELP_COMMAND
+from reviews.models import (
+    Category, Comment, Genre, GenreTitle, Title, Review, User
+)
 
 
 MODELS = {
@@ -15,10 +18,10 @@ MODELS = {
 
 
 class Command(BaseCommand):
-    help = 'Загрузка данных из CSV-файла'
+    help = HELP_COMMAND
 
     def add_arguments(self, parser):
-        parser.add_argument('csvfile', type=str, help='Путь к CSV-файлу')
+        parser.add_argument('csvfile', type=str, help=CSV_PATH)
 
     def handle(self, *args, **options):
         file_path = options['csvfile']

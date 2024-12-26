@@ -1,8 +1,10 @@
+from django.contrib.auth import get_user_model
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
-from rest_framework import filters, status, mixins, viewsets
-from rest_framework.pagination import LimitOffsetPagination
-from rest_framework.response import Response
+from rest_framework import filters, mixins, viewsets
+from rest_framework.pagination import PageNumberPagination
+
+from .permissions import IsAdminModeratorAuthorOrReadOnly, IsAdminOrReadOnly
 
 from .serializers import (ReviewSerializer,
                           CommentSerializer,
@@ -10,11 +12,11 @@ from .serializers import (ReviewSerializer,
                           GenreSerializer,
                           TitleSerializer)
 from reviews.models import (Title,
-                            User,
                             Genre,
                             Category,
-                            Comment,
                             Review)
+
+User = get_user_model()
 
 
 class CategoryViewSet(
@@ -25,10 +27,10 @@ class CategoryViewSet(
 ):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    # permission_classes = (Admin,)
-    filter_backends = (filters.SearchFilter,)
-    pagination_class = LimitOffsetPagination
-    search_fields = ('name',)
+    permission_classes = IsAdminOrReadOnly,
+    filter_backends = filters.SearchFilter,
+    pagination_class = PageNumberPagination
+    search_fields = 'name',
     lookup_field = 'slug'
 
 
@@ -40,30 +42,36 @@ class GenreViewSet(
 ):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
-    # permission_classes = (Admin,)
-    filter_backends = (filters.SearchFilter,)
-    pagination_class = LimitOffsetPagination
-    search_fields = ('name',)
+    permission_classes = IsAdminOrReadOnly,
+    filter_backends = filters.SearchFilter,
+    pagination_class = PageNumberPagination
+    search_fields = 'name',
     lookup_field = 'slug'
 
 
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.annotate(rating=Avg('reviews__score'))
     serializer_class = TitleSerializer
-    # permission_classes = (Admin,)
-    filter_backends = (filters.SearchFilter,)
-    search_fields = ('category', 'genre', 'name', 'year')
+    permission_classes = IsAdminOrReadOnly,
+    filter_backends = filters.SearchFilter,
+    pagination_class = PageNumberPagination
+    search_fields = 'category', 'genre', 'name', 'year'
+    http_method_names = (
+        'get', 'post', 'patch', 'delete', 'head', 'options', 'trace'
+    )
 
-    def update(self, request, *args, **kwargs):
-        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 class ReviewViewSet(viewsets.ModelViewSet):
 
     serializer_class = ReviewSerializer
-    #permission_classes = ()
+    permission_classes = IsAdminModeratorAuthorOrReadOnly,
+    http_method_names = (
+        'get', 'post', 'patch', 'delete', 'head', 'options', 'trace'
+    )
+    pagination_class = PageNumberPagination
 
     def get_title(self):
-        title_id = self.kwargs.get('title_id')
+        title_id = self.kwargs.get('id')
         return get_object_or_404(Title, pk=title_id)
 
     def get_queryset(self):
@@ -78,7 +86,11 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
-    #permission_classes = ()
+    permission_classes = IsAdminModeratorAuthorOrReadOnly,
+    http_method_names = (
+        'get', 'post', 'patch', 'delete', 'head', 'options', 'trace'
+    )
+    pagination_class = PageNumberPagination
 
     def get_review(self):
         review_id = self.kwargs.get('review_id')

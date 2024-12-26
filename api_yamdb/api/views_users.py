@@ -1,10 +1,11 @@
 from django.contrib.auth import get_user_model
 from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.filters import SearchFilter
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import IsAuthenticated
 
 from .permissions import IsAdmin
 from .serializers_users import UsersSerializer, UserProfileSerializer
@@ -14,6 +15,7 @@ User = get_user_model()
 
 
 @api_view(['GET', 'PATCH'])
+@permission_classes([IsAuthenticated])
 def user_profile(request):
     if request.method == 'GET':
         serializer = UserProfileSerializer(request.user)

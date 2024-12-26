@@ -6,8 +6,6 @@ from django.core.validators import (
     MinValueValidator
 )
 
-User = get_user_model()
-
 
 class CustomUser(AbstractUser):
     ROLE_CHOICES = (
@@ -29,6 +27,9 @@ class CustomUser(AbstractUser):
         verbose_name = 'пользователь'
         verbose_name_plural = 'Пользователи'
         ordering = 'username',
+
+
+User = get_user_model()
 
 
 class Genre(models.Model):
