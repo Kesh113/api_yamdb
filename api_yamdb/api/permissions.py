@@ -29,4 +29,5 @@ class IsAdminModeratorAuthorOrReadOnly(permissions.BasePermission):
                 or obj.author == request.user
                 or request.user.role == 'moderator'
                 or request.user.role == 'admin'
+                or request.user.is_superuser
                 )

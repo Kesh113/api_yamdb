@@ -1,4 +1,6 @@
 from rest_framework import serializers
+from rest_framework import status
+from rest_framework.response import Response
 
 from .constants import ONLY_ONE_REVIEW
 from reviews.models import Review, Comment, Category, Genre, Title
@@ -61,8 +63,8 @@ class ReviewSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Review
-        fields = '__all__'
-        read_only_fields = 'author', 'pub_date'
+        exclude = 'title',
+        read_only_fields = 'id', 'author', 'pub_date'
 
     def validate(self, data):
         if self.context.get('request').method == 'POST':
@@ -70,15 +72,22 @@ class ReviewSerializer(serializers.ModelSerializer):
             title_id = self.context.get('view').kwargs.get('title_id')
             if Review.objects.filter(author=author, title=title_id).exists():
                 raise serializers.ValidationError(ONLY_ONE_REVIEW)
-            return data
+            if not Title.objects.filter(pk=title_id).exists():
+                return Response(status=status.HTTP_404_NOT_FOUND)
         return data
 
 
 class CommentSerializer(serializers.ModelSerializer):
-
     author = serializers.SlugRelatedField(
         read_only=True, slug_field='username')
 
     class Meta:
         model = Comment
         fields = 'id', 'author', 'text', 'pub_date'
+        read_only_fields = 'id',
+
+    def validate(self, data):
+        title_id = self.context.get('view').kwargs.get('title_id')
+        if not Title.objects.filter(pk=title_id).exists():
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        return data
