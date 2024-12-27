@@ -66,11 +66,6 @@ class Title(models.Model):
         ordering = ('name',)
 
 
-# class GenreTitle(models.Model):
-#     title = models.ForeignKey(Title, on_delete=models.CASCADE)
-#     genre = models.ForeignKey(Genre, on_delete=models.CASCADE)
-
-
 class Review(models.Model):
     text = models.TextField(max_length=500)
     author = models.ForeignKey(
