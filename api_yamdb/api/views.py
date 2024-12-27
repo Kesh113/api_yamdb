@@ -5,6 +5,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, mixins, viewsets
 from rest_framework.pagination import PageNumberPagination
 
+from .constants import PARAMETRS
 from .permissions import IsAdminModeratorAuthorOrReadOnly, IsAdminOrReadOnly
 
 from .serializers import (ReviewSerializer,
@@ -51,15 +52,26 @@ class GenreViewSet(
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.annotate(rating=Avg('reviews__score'))
+
     serializer_class = TitleSerializer
     permission_classes = IsAdminOrReadOnly,
-    filter_backends = DjangoFilterBackend,
     pagination_class = PageNumberPagination
     http_method_names = (
         'get', 'post', 'patch', 'delete', 'head', 'options', 'trace'
     )
-    filterset_fields = 'genre__slug', 'category__slug', 'name', 'year'
+
+    def get_queryset(self):
+        queryset = Title.objects.all()
+
+        for parametr in PARAMETRS:
+            query_param = self.request.query_params.get(
+                list(parametr.values())[0]
+            )
+            parametr[list(parametr.keys())[0]] = query_param
+            if query_param:
+                queryset = queryset.filter(**parametr)
+
+        return queryset
 
 
 class ReviewViewSet(viewsets.ModelViewSet):

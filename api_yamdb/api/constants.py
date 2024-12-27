@@ -9,3 +9,10 @@ ONLY_ONE_REVIEW = 'Можно оставить только один отзыв 
 
 HELP_COMMAND = 'Загрузка данных из CSV-файла'
 CSV_PATH = 'Путь к CSV-файлу'
+
+PARAMETRS = [
+    {'genre__slug': 'genre'},
+    {'category__slug': 'category'},
+    {'name': 'name'},
+    {'year': 'year'}
+]

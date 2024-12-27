@@ -17,7 +17,7 @@ class GenreSerializer(serializers.ModelSerializer):
 
 
 class TitleSerializer(serializers.ModelSerializer):
-    rating = serializers.IntegerField(read_only=True)
+    rating = serializers.SerializerMethodField()
     genre = serializers.SlugRelatedField(
         many=True,
         slug_field='slug',
@@ -33,6 +33,13 @@ class TitleSerializer(serializers.ModelSerializer):
         model = Title
         fields = ('id', 'name', 'year', 'rating',
                   'description', 'genre', 'category')
+
+    def get_rating(self, obj):
+        reviews = obj.reviews.all()
+
+        if reviews:
+            rating = [review.score for review in reviews]
+            return sum(rating) // len(rating)
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -69,7 +76,8 @@ class ReviewSerializer(serializers.ModelSerializer):
 
 class CommentSerializer(serializers.ModelSerializer):
 
-    author = serializers.SlugRelatedField(read_only=True, slug_field='username')
+    author = serializers.SlugRelatedField(
+        read_only=True, slug_field='username')
 
     class Meta:
         model = Comment
