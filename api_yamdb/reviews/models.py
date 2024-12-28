@@ -1,5 +1,3 @@
-from datetime import date
-
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import (
@@ -16,6 +14,7 @@ from api.constants import (
     MODERATOR_ROLE, USER_ROLE, USERNAME_BAN, MAX_LENGTH_USERNAME,
     MAX_SCORE, MAX_STR_LEN
 )
+from reviews.utils import CurrentYearMaxValueValidator
 
 
 ROLE_CHOICES = (
@@ -94,44 +93,24 @@ class ReviewsUser(AbstractUser):
 User = get_user_model()
 
 
-class Genre(models.Model):
+class CategoryGenreBaseModel(models.Model):
     name = models.CharField(max_length=256)
     slug = models.SlugField(
         max_length=50,
         unique=True
-    )
-
-
-class Category(models.Model):
-    name = models.CharField(max_length=256)
-    slug = models.SlugField(
-        max_length=50,
-        unique=True
-    )
-
-
-class Title(models.Model):
-    name = models.CharField(max_length=256)
-    year = models.PositiveIntegerField(
-        validators=[MaxValueValidator(date.today().year)]
-    )
-    description = models.TextField(blank=True)
-    genre = models.ManyToManyField(Genre)
-    category = models.ForeignKey(
-        Category,
-        on_delete=models.CASCADE
     )
 
     class Meta:
-        default_related_name = 'titles'
+        abstract = True
         ordering = ('name',)
 
 
-class ReviewCommentAbstract(models.Model):
+class CommentReviewBaseModel(models.Model):
     text = models.TextField()
-    author = models.ForeignKey(User,
-                               on_delete=models.CASCADE,
-                               related_name='comments',)
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE
+    )
     pub_date = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -142,17 +121,48 @@ class ReviewCommentAbstract(models.Model):
         return self.text[:MAX_STR_LEN]
 
 
-class Review(ReviewCommentAbstract):
+class Genre(CategoryGenreBaseModel):
+    class Meta:
+        verbose_name = 'жанр'
+        verbose_name_plural = 'Жанры'
+
+
+class Category(CategoryGenreBaseModel):
+    class Meta:
+        verbose_name = 'категория'
+        verbose_name_plural = 'Категории'
+
+
+class Title(models.Model):
+    name = models.CharField(max_length=256)
+    year = models.PositiveIntegerField(
+        validators=[CurrentYearMaxValueValidator()]
+    )
+    description = models.TextField(blank=True)
+    genre = models.ManyToManyField(Genre)
+    category = models.ForeignKey(
+        Category,
+        on_delete=models.CASCADE
+    )
+
+    class Meta:
+        verbose_name = 'произведение'
+        verbose_name_plural = 'Произведения'
+        default_related_name = 'titles'
+        ordering = ('name',)
+
+
+class Review(CommentReviewBaseModel):
     score = models.PositiveIntegerField(
         validators=[MaxValueValidator(MAX_SCORE,)])
     title = models.ForeignKey(
         Title,
         on_delete=models.CASCADE,
-        related_name='reviews',
         null=True
     )
 
     class Meta:
+        default_related_name = 'reviews'
         constraints = (
             models.UniqueConstraint(
                 fields=['author', 'title'],
@@ -161,7 +171,11 @@ class Review(ReviewCommentAbstract):
         )
 
 
-class Comment(ReviewCommentAbstract):
-    review = models.ForeignKey(Review,
-                               on_delete=models.CASCADE,
-                               related_name='comments')
+class Comment(CommentReviewBaseModel):
+    review = models.ForeignKey(
+        Review,
+        on_delete=models.CASCADE
+    )
+
+    class Meta:
+        default_related_name = 'comments'
