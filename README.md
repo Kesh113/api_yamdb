@@ -11,7 +11,8 @@
 - Python 3.9
 - Django Rest Framework 3.12.4
 - SQlite
-
+- PyJWT 2.1.0
+- requests 2.26.0
 
 # Как запустить проект:
 
@@ -35,9 +36,7 @@ python3 manage.py migrate
 ```
 - Заполнить БД из CSV:
 ```
-"py manage.py load_csv static/data/category.csv"
-1) load_csv - название команды
-2) static/data/category.csv - путь до файла
+py manage.py load_csv static/data/category.csv
 ```
 - Запустить проект:
 ```
@@ -48,18 +47,18 @@ python3 manage.py runserver
 ```
 Для доступа к документации проекта необходимо
 при запущенном проекте добавить к его адресу "/redok/".
-Например, http://127.0.0.1:8000/redoc/. 
 В документации указаны примеры запросов и ответов.
 ```
+-[Redoc](http://127.0.0.1:8000/redoc/)
 
 # Авторы
 - Широкожухов Артем Андреевич 
-- https://github.com/Kesh113
+- [GitHub](https://github.com/Kesh113)
 - 
 - Герасимов Сергей Антонович
-- https://github.com/crossmos
+- [GitHub](https://github.com/crossmos)
 - 
 - Степан Карпов
-- https://github.com/SVKNL
+- [GitHub](https://github.com/SVKNL)
 
 

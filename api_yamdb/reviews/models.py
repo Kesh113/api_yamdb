@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import (
     MaxValueValidator,
-    RegexValidator
+    RegexValidator, MinValueValidator
 )
 from django.db import models
 from django.utils.deconstruct import deconstructible
@@ -11,7 +11,7 @@ from django.utils.translation import gettext_lazy
 from api.constants import (
     ADMIN_ROLE, MAX_LENGTH_EMAIL, MAX_LENGTH_FIRST_LAST_NAME,
     MODERATOR_ROLE, USER_ROLE, USERNAME_BAN, MAX_LENGTH_USERNAME,
-    MAX_SCORE, MAX_STR_LEN
+    MAX_SCORE, MAX_STR_LEN, MIN_SCORE
 )
 from reviews.utils import CurrentYearMaxValueValidator
 
@@ -82,8 +82,8 @@ class ReviewsUser(AbstractUser):
 User = get_user_model()
 
 
-class CategoryGenreBaseModel(models.Model):
-    name = models.CharField(max_length=256)
+class NameSlugBaseModel(models.Model):
+    name = models.CharField(max_length=256, verbose_name='название')
     slug = models.SlugField(
         max_length=50,
         unique=True
@@ -97,8 +97,8 @@ class CategoryGenreBaseModel(models.Model):
         return self.name[:MAX_STR_LEN]
 
 
-class CommentReviewBaseModel(models.Model):
-    text = models.TextField()
+class TextAuthorPubdateBaseModel(models.Model):
+    text = models.TextField(verbose_name='текст')
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE
@@ -108,25 +108,26 @@ class CommentReviewBaseModel(models.Model):
     class Meta:
         abstract = True
         ordering = ('-pub_date',)
+        default_related_name = '%(class)ss'
 
     def __str__(self):
         return self.text[:MAX_STR_LEN]
 
 
-class Genre(CategoryGenreBaseModel):
-    class Meta:
+class Genre(NameSlugBaseModel):
+    class Meta(NameSlugBaseModel.Meta):
         verbose_name = 'жанр'
         verbose_name_plural = 'Жанры'
 
 
-class Category(CategoryGenreBaseModel):
-    class Meta:
+class Category(NameSlugBaseModel):
+    class Meta(NameSlugBaseModel.Meta):
         verbose_name = 'категория'
         verbose_name_plural = 'Категории'
 
 
 class Title(models.Model):
-    name = models.CharField(max_length=256)
+    name = models.CharField(max_length=256, verbose_name='название')
     year = models.PositiveIntegerField(
         validators=[CurrentYearMaxValueValidator()]
     )
@@ -147,17 +148,17 @@ class Title(models.Model):
         return self.name[:MAX_STR_LEN]
 
 
-class Review(CommentReviewBaseModel):
-    score = models.PositiveIntegerField(
-        validators=[MaxValueValidator(MAX_SCORE,)])
+class Review(TextAuthorPubdateBaseModel):
+    score = models.PositiveIntegerField(verbose_name='оценка',
+        validators=[MaxValueValidator(MAX_SCORE,),
+                    MinValueValidator(MIN_SCORE)])
     title = models.ForeignKey(
         Title,
         on_delete=models.CASCADE,
         null=True
     )
 
-    class Meta:
-        default_related_name = 'reviews'
+    class Meta(TextAuthorPubdateBaseModel.Meta):
         verbose_name = 'отзыв'
         verbose_name_plural = 'Отзывы'
         constraints = (
@@ -168,13 +169,12 @@ class Review(CommentReviewBaseModel):
         )
 
 
-class Comment(CommentReviewBaseModel):
+class Comment(TextAuthorPubdateBaseModel):
     review = models.ForeignKey(
         Review,
         on_delete=models.CASCADE
     )
 
-    class Meta:
-        default_related_name = 'comments'
+    class Meta(TextAuthorPubdateBaseModel.Meta):
         verbose_name = 'комментарий'
         verbose_name_plural = 'Комментарии'
