@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from rest_framework import filters, mixins, viewsets
 from rest_framework.pagination import PageNumberPagination
@@ -50,7 +51,8 @@ class GenreViewSet(
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-
+    queryset = Title.objects.all().annotate(rating=Avg('reviews__score'))
+    filter_backends = filters.SearchFilter, filters.OrderingFilter
     serializer_class = TitleSerializer
     permission_classes = IsAdminOrReadOnly,
     pagination_class = PageNumberPagination
@@ -58,18 +60,7 @@ class TitleViewSet(viewsets.ModelViewSet):
         'get', 'post', 'patch', 'delete', 'head', 'options', 'trace'
     )
 
-    def get_queryset(self):
-        queryset = Title.objects.all()
 
-        for parametr in PARAMETRS:
-            query_param = self.request.query_params.get(
-                list(parametr.values())[0]
-            )
-            if query_param:
-                data = {list(parametr.keys())[0]: query_param}
-                queryset = queryset.filter(**data)
-
-        return queryset
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
@@ -81,7 +72,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
     pagination_class = PageNumberPagination
 
     def get_title(self):
-        return get_object_or_404(Title, pk=self.kwargs.get('title_id'))
+        return get_object_or_404(Title, pk=self.kwargs['title_id'])
 
     def get_queryset(self):
         return self.get_title().reviews.all()
@@ -104,8 +95,8 @@ class CommentViewSet(viewsets.ModelViewSet):
     def get_review(self):
         return get_object_or_404(
             Review,
-            pk=self.kwargs.get('review_id'),
-            title__id=self.kwargs.get('title_id')
+            pk=self.kwargs['review_id'],
+            title__id=self.kwargs['title_id']
         )
 
     def get_queryset(self):
