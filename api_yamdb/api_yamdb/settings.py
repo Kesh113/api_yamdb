@@ -126,7 +126,7 @@ SIMPLE_JWT = {
 }
 
 
-AUTH_USER_MODEL = 'reviews.CustomUser'
+AUTH_USER_MODEL = 'reviews.ReviewsUser'
 
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

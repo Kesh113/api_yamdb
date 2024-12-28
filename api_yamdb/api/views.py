@@ -1,20 +1,20 @@
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
-from rest_framework import filters, mixins, viewsets
+from rest_framework import filters, mixins, viewsets, status
+from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
 from .constants import PARAMETRS
-from .permissions import IsAdminModeratorAuthorOrReadOnly, IsAdminOrReadOnly
-
-from .serializers import (ReviewSerializer,
-                          CommentSerializer,
-                          CategorySerializer,
-                          GenreSerializer,
-                          TitleSerializer)
-from reviews.models import (Title,
-                            Genre,
-                            Category,
-                            Review)
+from .permissions import (
+    IsAdminModeratorAuthorOrReadOnly, IsAdminOrReadOnly, IsAdmin
+)
+from .serializers import (
+    ReviewSerializer, CommentSerializer, CategorySerializer,
+    GenreSerializer, TitleSerializer, UserSerializer, UserProfileSerializer
+)
+from reviews.models import (Title, Genre, Category, Review)
 
 User = get_user_model()
 
@@ -116,3 +116,36 @@ class CommentViewSet(viewsets.ModelViewSet):
             author=self.request.user,
             review=self.get_review()
         )
+
+
+class UsersView(viewsets.ModelViewSet):
+    serializer_class = UserSerializer
+    queryset = User.objects.all()
+    http_method_names = (
+        'get', 'post', 'patch', 'delete', 'head', 'options', 'trace'
+    )
+    lookup_field = 'username'
+    filter_backends = filters.SearchFilter,
+    search_fields = 'role', 'username'
+    permission_classes = IsAdmin,
+    pagination_class = PageNumberPagination
+
+    @action(
+        detail=False,
+        methods=['get', 'patch'],
+        url_path='me',
+        permission_classes=(IsAuthenticated,)
+    )
+    def user_profile(self, request):
+        if request.method == 'GET':
+            return Response(
+                UserProfileSerializer(request.user).data,
+                status=status.HTTP_200_OK
+            )
+        else:
+            serializer = UserProfileSerializer(
+                request.user, data=request.data, partial=True
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)

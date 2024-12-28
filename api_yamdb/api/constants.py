@@ -1,14 +1,19 @@
+USERNAME_BAN = 'me'
+
+ADMIN_ROLE = 'admin'
+USER_ROLE = 'user'
+MODERATOR_ROLE = 'moderator'
+
+MAX_LENGTH_EMAIL = 254
+MAX_LENGTH_USERNAME = 150
+MAX_LENGTH_FIRST_LAST_NAME = 150
+
 SUBJECT = 'Код подтверждения'
 MESSAGE = 'Ваш код подтверждения: {}'
 
-ME_FORBIDDEN = "Использовать имя 'me' в качестве username запрещено."
-USER_NOT_FOUND = 'Пользователь не найден'
 INVALID_CONFIRM_CODE = 'Неверный код подтверждения'
 
 ONLY_ONE_REVIEW = 'Можно оставить только один отзыв на произведение'
-
-HELP_COMMAND = 'Загрузка данных из CSV-файла'
-CSV_PATH = 'Путь к CSV-файлу'
 
 PARAMETRS = [
     {'genre__slug': 'genre'},

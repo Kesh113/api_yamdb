@@ -1,8 +1,7 @@
 import csv
 from django.core.management.base import BaseCommand
-from api.constants import CSV_PATH, HELP_COMMAND
 from reviews.models import (
-    Category, Comment, Genre, GenreTitle, Title, Review, User
+    Category, Comment, Genre, Title, Review, User
 )
 
 
@@ -10,11 +9,13 @@ MODELS = {
     'category': Category,
     'comments': Comment,
     'genre': Genre,
-    'genre_title': GenreTitle,
     'titles': Title,
     'review': Review,
     'users': User
 }
+
+HELP_COMMAND = 'Загрузка данных из CSV-файла'
+CSV_PATH = 'Путь к CSV-файлу'
 
 
 class Command(BaseCommand):

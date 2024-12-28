@@ -2,9 +2,9 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
 from .views import (
-    CategoryViewSet, GenreViewSet, TitleViewSet, ReviewViewSet, CommentViewSet
+    CategoryViewSet, GenreViewSet, TitleViewSet,
+    ReviewViewSet, CommentViewSet, UsersView
 )
-from .views_users import user_profile, UsersView
 from .views_auth import signup_or_update, confirmation
 
 
@@ -19,11 +19,13 @@ v1_router.register(r'titles/(?P<title_id>\d+)'
                    r'/reviews/(?P<review_id>\d+)/comments',
                    CommentViewSet,
                    basename='comments')
-v1_router.register('users', UsersView, basename='users')
+v1_router.register(r'users', UsersView, basename='users')
 
-urlpatterns = [
+auth_urls = [
     path('v1/auth/signup/', signup_or_update, name='signup'),
     path('v1/auth/token/', confirmation, name='token'),
-    path('v1/users/me/', user_profile, name='profile'),
-    path('v1/', include(v1_router.urls)),
 ]
+
+urlpatterns = [
+    path('v1/', include(v1_router.urls)),
+] + auth_urls

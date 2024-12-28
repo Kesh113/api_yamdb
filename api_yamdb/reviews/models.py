@@ -1,25 +1,85 @@
 from datetime import date
-from django.contrib.auth.models import AbstractUser
-from django.db import models
+
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AbstractUser
 from django.core.validators import (
     MaxValueValidator,
-    MinValueValidator
+    MinValueValidator,
+    RegexValidator
+)
+from django.db import models
+from django.utils.deconstruct import deconstructible
+from django.utils.translation import gettext_lazy
+
+from api.constants import (
+    ADMIN_ROLE, MAX_LENGTH_EMAIL, MAX_LENGTH_FIRST_LAST_NAME,
+    MODERATOR_ROLE, USER_ROLE, USERNAME_BAN, MAX_LENGTH_USERNAME
 )
 
 
-class CustomUser(AbstractUser):
-    ROLE_CHOICES = (
-        ('user', 'Пользователь'),
-        ('moderator', 'Модератор'),
-        ('admin', 'Администратор')
-    )
+ROLE_CHOICES = (
+    (USER_ROLE, 'Пользователь'),
+    (MODERATOR_ROLE, 'Модератор'),
+    (ADMIN_ROLE, 'Администратор')
+)
 
-    email = models.EmailField(unique=True)
+USER_ALREADY_EXIST = 'Пользователь с таким username уже существует.'
+
+USERNAME_HELP_TEXT = ('Обязательное поле. Не более 150 символов. Только буквы,'
+                      f' цифры и @/./+/-/_. Слова кроме "{USERNAME_BAN}".')
+
+USERNAME_VALIDATE_MASSAGE = (
+    'Введите действительное имя пользователя. '
+    'Это значение может содержать только буквы '
+    f'числа, и символы: @/./+/-/_ . Слова кроме "{USERNAME_BAN}".'
+)
+
+MAX_LENGTH_ROLE = max(map(lambda role: len(role[0]), ROLE_CHOICES))
+
+
+@deconstructible
+class UsernameValidator(RegexValidator):
+    regex = rf'^(?!{USERNAME_BAN}$)[\w.@+-]+\Z'
+    message = gettext_lazy(USERNAME_VALIDATE_MASSAGE)
+
+
+class ReviewsUser(AbstractUser):
+    email = models.EmailField(max_length=MAX_LENGTH_EMAIL, unique=True)
+    username = models.CharField(
+        max_length=MAX_LENGTH_USERNAME,
+        unique=True,
+        help_text=gettext_lazy(USERNAME_HELP_TEXT),
+        validators=(UsernameValidator(),),
+        error_messages={
+            'unique': gettext_lazy(USER_ALREADY_EXIST),
+        },
+    )
+    first_name = models.CharField(
+        max_length=MAX_LENGTH_FIRST_LAST_NAME, blank=True
+    )
+    last_name = models.CharField(
+        max_length=MAX_LENGTH_FIRST_LAST_NAME, blank=True
+    )
     role = models.CharField(
-        max_length=13, choices=ROLE_CHOICES, default='user'
+        max_length=MAX_LENGTH_ROLE,
+        choices=ROLE_CHOICES,
+        default=USER_ROLE
     )
     bio = models.TextField(blank=True)
+    # confirmation_code = models.PositiveIntegerField(
+    #     blank=True,
+    #     validators=[
+    #         MinValueValidator(
+    #             100000,
+    #         ),
+    #         MaxValueValidator(
+    #             999999,
+    #         ),
+    #     ])
+
+    @property
+    def is_admin_or_superuser(self):
+        return (self.role == ADMIN_ROLE or self.is_superuser)
 
     def __str__(self):
         return f'{self.username[:21]}, роль - {self.role}'
