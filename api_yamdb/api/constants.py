@@ -1,5 +1,7 @@
 SUBJECT = 'Код подтверждения'
 MESSAGE = 'Ваш код подтверждения: {}'
+MAX_SCORE = 10
+MAX_STR_LEN = 20
 
 ME_FORBIDDEN = "Использовать имя 'me' в качестве username запрещено."
 USER_NOT_FOUND = 'Пользователь не найден'

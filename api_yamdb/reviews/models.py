@@ -1,11 +1,12 @@
 from datetime import date
+
 from django.contrib.auth.models import AbstractUser
-from django.db import models
 from django.contrib.auth import get_user_model
-from django.core.validators import (
-    MaxValueValidator,
-    MinValueValidator
-)
+from django.core.validators import MaxValueValidator
+from django.db import models
+
+from api.constants import MAX_SCORE, MAX_STR_LEN
+
 
 
 class CustomUser(AbstractUser):
@@ -66,28 +67,25 @@ class Title(models.Model):
         ordering = ('name',)
 
 
-class Review(models.Model):
-    text = models.TextField(max_length=500)
-    author = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='reviews',
-    )
+class ReviewCommentAbstract(models.Model):
+    text = models.TextField()
+    author = models.ForeignKey(User,
+                               on_delete=models.CASCADE,
+                               related_name='comments',)
+    pub_date = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        abstract = True
+        ordering = ('-pub_date',)
+
+    def __str__(self):
+        return self.text[:MAX_STR_LEN]
+
+
+
+class Review(ReviewCommentAbstract):
     score = models.PositiveIntegerField(
-        validators=[
-            MinValueValidator(
-                1,
-                message='Введенная оценка ниже допустимой'
-            ),
-            MaxValueValidator(
-                10,
-                message='Введенная оценка выше допустимой'
-            ),
-        ]
-    )
-    pub_date = models.DateTimeField(
-        auto_now_add=True
-    )
+        validators=[MaxValueValidator(MAX_SCORE,)])
     title = models.ForeignKey(
         Title,
         on_delete=models.CASCADE,
@@ -96,7 +94,6 @@ class Review(models.Model):
     )
 
     class Meta:
-        ordering = ('-pub_date',)
         constraints = (
             models.UniqueConstraint(
                 fields=['author', 'title'],
@@ -104,22 +101,9 @@ class Review(models.Model):
             ),
         )
 
-    def __str__(self):
-        return self.text[:20]
 
-
-class Comment(models.Model):
-    text = models.TextField(max_length=500)
-    author = models.ForeignKey(User,
-                               on_delete=models.CASCADE,
-                               related_name='comments',)
-    pub_date = models.DateTimeField(auto_now_add=True)
+class Comment(ReviewCommentAbstract):
     review = models.ForeignKey(Review,
                                on_delete=models.CASCADE,
                                related_name='comments')
 
-    class Meta:
-        ordering = ('-pub_date',)
-
-    def __str__(self):
-        return self.text[:20]
