@@ -1,7 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
 from django.db import IntegrityError
-from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
@@ -29,7 +28,7 @@ class GenreSerializer(serializers.ModelSerializer):
         fields = 'name', 'slug'
 
 
-class TitleSerializer(serializers.ModelSerializer):
+class TitleWriteSerializer(serializers.ModelSerializer):
     rating = serializers.IntegerField(read_only=True)
     genre = serializers.SlugRelatedField(
         many=True,
@@ -46,6 +45,9 @@ class TitleSerializer(serializers.ModelSerializer):
         model = Title
         fields = ('id', 'name', 'year', 'rating',
                   'description', 'genre', 'category')
+
+
+class TitleReadSerializer(TitleWriteSerializer):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)

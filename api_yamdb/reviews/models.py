@@ -2,7 +2,6 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import (
     MaxValueValidator,
-    MinValueValidator,
     RegexValidator
 )
 from django.db import models
@@ -66,16 +65,6 @@ class ReviewsUser(AbstractUser):
         default=USER_ROLE
     )
     bio = models.TextField(blank=True)
-    # confirmation_code = models.PositiveIntegerField(
-    #     blank=True,
-    #     validators=[
-    #         MinValueValidator(
-    #             100000,
-    #         ),
-    #         MaxValueValidator(
-    #             999999,
-    #         ),
-    #     ])
 
     @property
     def is_admin_or_superuser(self):
@@ -103,6 +92,9 @@ class CategoryGenreBaseModel(models.Model):
     class Meta:
         abstract = True
         ordering = ('name',)
+
+    def __str__(self):
+        return self.name[:MAX_STR_LEN]
 
 
 class CommentReviewBaseModel(models.Model):
@@ -151,6 +143,9 @@ class Title(models.Model):
         default_related_name = 'titles'
         ordering = ('name',)
 
+    def __str__(self):
+        return self.name[:MAX_STR_LEN]
+
 
 class Review(CommentReviewBaseModel):
     score = models.PositiveIntegerField(
@@ -163,6 +158,8 @@ class Review(CommentReviewBaseModel):
 
     class Meta:
         default_related_name = 'reviews'
+        verbose_name = 'отзыв'
+        verbose_name_plural = 'Отзывы'
         constraints = (
             models.UniqueConstraint(
                 fields=['author', 'title'],
@@ -179,3 +176,5 @@ class Comment(CommentReviewBaseModel):
 
     class Meta:
         default_related_name = 'comments'
+        verbose_name = 'комментарий'
+        verbose_name_plural = 'Комментарии'
