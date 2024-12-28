@@ -10,6 +10,8 @@ MAX_LENGTH_FIRST_LAST_NAME = 150
 
 SUBJECT = 'Код подтверждения'
 MESSAGE = 'Ваш код подтверждения: {}'
+MAX_SCORE = 10
+MAX_STR_LEN = 20
 
 INVALID_CONFIRM_CODE = 'Неверный код подтверждения'
 

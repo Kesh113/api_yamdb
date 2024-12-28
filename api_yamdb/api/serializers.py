@@ -6,7 +6,10 @@ from rest_framework import serializers
 from rest_framework import status
 from rest_framework.response import Response
 
-from .constants import INVALID_CONFIRM_CODE, ONLY_ONE_REVIEW, MAX_LENGTH_EMAIL, MAX_LENGTH_USERNAME
+from .constants import (
+    INVALID_CONFIRM_CODE, ONLY_ONE_REVIEW,
+    MAX_LENGTH_EMAIL, MAX_LENGTH_USERNAME
+)
 from reviews.models import (
     Review, Comment, Category, Genre, Title, UsernameValidator
 )
@@ -28,7 +31,7 @@ class GenreSerializer(serializers.ModelSerializer):
 
 
 class TitleSerializer(serializers.ModelSerializer):
-    rating = serializers.SerializerMethodField()
+    rating = serializers.IntegerField(read_only=True)
     genre = serializers.SlugRelatedField(
         many=True,
         slug_field='slug',
@@ -44,13 +47,6 @@ class TitleSerializer(serializers.ModelSerializer):
         model = Title
         fields = ('id', 'name', 'year', 'rating',
                   'description', 'genre', 'category')
-
-    def get_rating(self, obj):
-        reviews = obj.reviews.all()
-
-        if reviews:
-            rating = [review.score for review in reviews]
-            return sum(rating) // len(rating)
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -76,13 +72,12 @@ class ReviewSerializer(serializers.ModelSerializer):
         read_only_fields = 'id', 'author', 'pub_date'
 
     def validate(self, data):
-        if self.context.get('request').method == 'POST':
-            author = self.context.get('request').user
-            title_id = self.context.get('view').kwargs.get('title_id')
-            if Review.objects.filter(author=author, title=title_id).exists():
-                raise serializers.ValidationError(ONLY_ONE_REVIEW)
-            if not Title.objects.filter(pk=title_id).exists():
-                return Response(status=status.HTTP_404_NOT_FOUND)
+        if not self.context.get('request').method == 'POST':
+            return data
+        user = self.context['request'].user
+        title_id = self.context['view'].kwargs['title_id']
+        if Review.objects.filter(author=user, title=title_id).exists():
+            raise serializers.ValidationError(ONLY_ONE_REVIEW)
         return data
 
 
