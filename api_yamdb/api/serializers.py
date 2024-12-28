@@ -88,13 +88,6 @@ class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
         fields = 'id', 'author', 'text', 'pub_date'
-        read_only_fields = 'id',
-
-    def validate(self, data):
-        title_id = self.context.get('view').kwargs.get('title_id')
-        if not Title.objects.filter(pk=title_id).exists():
-            return Response(status=status.HTTP_404_NOT_FOUND)
-        return data
 
 
 class UserConfirmationSerializer(serializers.Serializer):
