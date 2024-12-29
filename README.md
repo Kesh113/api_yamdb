@@ -8,21 +8,22 @@
 ```
 
 # Стэк:
-- Python 3.9
-- Django Rest Framework 3.12.4
+- Python 
+- Django Rest Framework 
 - SQlite
-- PyJWT 2.1.0
-- requests 2.26.0
+- PyJWT 
+- requests 
 
 # Как запустить проект:
 
-- Скопировать репозиторий -git clone:
+- Скопировать репозиторий:
 ```
-git@github.com:SVKNL/api_final_yatube.git
+git clone git@github.com:Kesh113/api_yamdb.git
 ```
 
-- Cоздать и активировать виртуальное окружение:
+- Перейти в нужную папку, cоздать и активировать виртуальное окружение:
 ```
+cd api_yamdb
 python3 -m venv env
 source env/bin/activate
 ```
@@ -36,8 +37,7 @@ python3 manage.py migrate
 ```
 - Заполнить БД из CSV:
 ```
-* Поместите все файлы в папку <django-project>/static/data/
-* Введите команду "py manage.py load_csv --all"
+py manage.py load_csv --all
 ```
 - Запустить проект:
 ```
