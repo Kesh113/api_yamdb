@@ -13,7 +13,7 @@ from api.constants import (
     MODERATOR_ROLE, USER_ROLE, USERNAME_BAN, MAX_LENGTH_USERNAME,
     MAX_SCORE, MAX_STR_LEN, MIN_SCORE
 )
-from reviews.utils import CurrentYearMaxValueValidator
+from reviews.utils import current_year_max_value_validator
 
 
 ROLE_CHOICES = (
@@ -43,7 +43,11 @@ class UsernameValidator(RegexValidator):
 
 
 class ReviewsUser(AbstractUser):
-    email = models.EmailField(max_length=MAX_LENGTH_EMAIL, unique=True)
+    email = models.EmailField(
+        max_length=MAX_LENGTH_EMAIL,
+        unique=True,
+        verbose_name='Электронная почта'
+    )
     username = models.CharField(
         max_length=MAX_LENGTH_USERNAME,
         unique=True,
@@ -52,19 +56,28 @@ class ReviewsUser(AbstractUser):
         error_messages={
             'unique': gettext_lazy(USER_ALREADY_EXIST),
         },
+        verbose_name='Пользовательское'
     )
     first_name = models.CharField(
-        max_length=MAX_LENGTH_FIRST_LAST_NAME, blank=True
+        max_length=MAX_LENGTH_FIRST_LAST_NAME,
+        blank=True,
+        verbose_name='Имя'
     )
     last_name = models.CharField(
-        max_length=MAX_LENGTH_FIRST_LAST_NAME, blank=True
+        max_length=MAX_LENGTH_FIRST_LAST_NAME,
+        blank=True,
+        verbose_name='Фамилия'
     )
     role = models.CharField(
         max_length=MAX_LENGTH_ROLE,
         choices=ROLE_CHOICES,
-        default=USER_ROLE
+        default=USER_ROLE,
+        verbose_name='Роль'
     )
-    bio = models.TextField(blank=True)
+    bio = models.TextField(
+        blank=True,
+        verbose_name='Биография'
+    )
 
     @property
     def is_admin_or_superuser(self):
@@ -83,10 +96,14 @@ User = get_user_model()
 
 
 class NameSlugBaseModel(models.Model):
-    name = models.CharField(max_length=256, verbose_name='название')
+    name = models.CharField(
+        max_length=256,
+        verbose_name='Название'
+    )
     slug = models.SlugField(
         max_length=50,
-        unique=True
+        unique=True,
+        verbose_name='Путь'
     )
 
     class Meta:
@@ -98,12 +115,16 @@ class NameSlugBaseModel(models.Model):
 
 
 class TextAuthorPubdateBaseModel(models.Model):
-    text = models.TextField(verbose_name='текст')
+    text = models.TextField(verbose_name='Текст')
     author = models.ForeignKey(
         User,
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        verbose_name='Автор'
     )
-    pub_date = models.DateTimeField(auto_now_add=True)
+    pub_date = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата публикации'
+    )
 
     class Meta:
         abstract = True
@@ -127,15 +148,26 @@ class Category(NameSlugBaseModel):
 
 
 class Title(models.Model):
-    name = models.CharField(max_length=256, verbose_name='название')
-    year = models.PositiveIntegerField(
-        validators=[CurrentYearMaxValueValidator()]
+    name = models.CharField(
+        max_length=256,
+        verbose_name='Название'
     )
-    description = models.TextField(blank=True)
-    genre = models.ManyToManyField(Genre)
+    year = models.PositiveIntegerField(
+        validators=[current_year_max_value_validator],
+        verbose_name='Год выпуска'
+    )
+    description = models.TextField(
+        blank=True,
+        verbose_name='Описание'
+    )
+    genre = models.ManyToManyField(
+        Genre,
+        verbose_name='Жанр'
+    )
     category = models.ForeignKey(
         Category,
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        verbose_name='Категория'
     )
 
     class Meta:
@@ -149,13 +181,16 @@ class Title(models.Model):
 
 
 class Review(TextAuthorPubdateBaseModel):
-    score = models.PositiveIntegerField(verbose_name='оценка',
+    score = models.PositiveIntegerField(
+        verbose_name='Оценка',
         validators=[MaxValueValidator(MAX_SCORE,),
-                    MinValueValidator(MIN_SCORE)])
+                    MinValueValidator(MIN_SCORE)]
+    )
     title = models.ForeignKey(
         Title,
         on_delete=models.CASCADE,
-        null=True
+        null=True,
+        verbose_name='Произведение'
     )
 
     class Meta(TextAuthorPubdateBaseModel.Meta):
@@ -172,7 +207,8 @@ class Review(TextAuthorPubdateBaseModel):
 class Comment(TextAuthorPubdateBaseModel):
     review = models.ForeignKey(
         Review,
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        verbose_name='Отзыв'
     )
 
     class Meta(TextAuthorPubdateBaseModel.Meta):

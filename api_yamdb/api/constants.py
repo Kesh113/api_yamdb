@@ -17,10 +17,3 @@ MAX_STR_LEN = 20
 INVALID_CONFIRM_CODE = 'Неверный код подтверждения'
 
 ONLY_ONE_REVIEW = 'Можно оставить только один отзыв на произведение'
-
-PARAMETRS = [
-    {'genre__slug': 'genre'},
-    {'category__slug': 'category'},
-    {'name': 'name'},
-    {'year': 'year'}
-]
