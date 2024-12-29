@@ -13,7 +13,7 @@ from api.constants import (
     MODERATOR_ROLE, USER_ROLE, USERNAME_BAN, MAX_LENGTH_USERNAME,
     MAX_SCORE, MAX_STR_LEN, MIN_SCORE
 )
-from reviews.utils import current_year_max_value_validator
+from reviews.utils import current_year_max_value_validate
 
 
 ROLE_CHOICES = (
@@ -153,7 +153,7 @@ class Title(models.Model):
         verbose_name='Название'
     )
     year = models.PositiveIntegerField(
-        validators=[current_year_max_value_validator],
+        validators=[current_year_max_value_validate()],
         verbose_name='Год выпуска'
     )
     description = models.TextField(
@@ -178,6 +178,19 @@ class Title(models.Model):
 
     def __str__(self):
         return self.name[:MAX_STR_LEN]
+
+
+class GenreTitle(models.Model):
+    genre = models.ForeignKey(
+        Genre,
+        on_delete=models.CASCADE,
+        verbose_name='Жанры'
+    )
+    title = models.ForeignKey(
+        Title,
+        on_delete=models.CASCADE,
+        verbose_name='Произведения'
+    )
 
 
 class Review(TextAuthorPubdateBaseModel):

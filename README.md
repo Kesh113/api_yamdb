@@ -36,7 +36,8 @@ python3 manage.py migrate
 ```
 - Заполнить БД из CSV:
 ```
-py manage.py load_csv static/data/category.csv
+* Поместите все файлы в папку <django-project>/static/data/
+* Введите команду "py manage.py load_csv --all"
 ```
 - Запустить проект:
 ```
