@@ -53,11 +53,9 @@ class TitleReadSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         representation = super().to_representation(instance)
 
-        # Получаем объект категории и сериализуем его
         category = instance.category
         representation['category'] = CategorySerializer(category).data
 
-        # Получаем объекты жанров и сериализуем их
         genres = instance.genre.all()
         representation['genre'] = GenreSerializer(genres, many=True).data
 

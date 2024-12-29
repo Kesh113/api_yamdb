@@ -11,7 +11,7 @@ from .constants import (
     MODERATOR_ROLE, USER_ROLE, MAX_LENGTH_USERNAME,
     MAX_SCORE, MAX_STR_LEN, MIN_SCORE
 )
-from reviews.utils import current_year_max_value_validate
+from reviews.utils import validate_current_year
 
 
 ROLE_CHOICES = (
@@ -48,7 +48,7 @@ class ReviewsUser(AbstractUser):
             regex=USERNAME_REGEX,
             message=USERNAME_VALIDATE_MASSAGE
         ),),
-        verbose_name='Имя пользователя'
+        verbose_name='Логин'
     )
     first_name = models.CharField(
         max_length=MAX_LENGTH_FIRST_LAST_NAME,
@@ -68,7 +68,7 @@ class ReviewsUser(AbstractUser):
     )
     bio = models.TextField(
         blank=True,
-        verbose_name='Биография'
+        verbose_name='О себе'
     )
 
     @property
@@ -144,8 +144,8 @@ class Title(models.Model):
         max_length=256,
         verbose_name='Название'
     )
-    year = models.PositiveIntegerField(
-        validators=[current_year_max_value_validate()],
+    year = models.IntegerField(
+        validators=[validate_current_year],
         verbose_name='Год выпуска'
     )
     description = models.TextField(
@@ -170,19 +170,6 @@ class Title(models.Model):
 
     def __str__(self):
         return self.name[:MAX_STR_LEN]
-
-
-class GenreTitle(models.Model):
-    genre = models.ForeignKey(
-        Genre,
-        on_delete=models.CASCADE,
-        verbose_name='Жанры'
-    )
-    title = models.ForeignKey(
-        Title,
-        on_delete=models.CASCADE,
-        verbose_name='Произведения'
-    )
 
 
 class Review(TextAuthorPubdateBaseModel):

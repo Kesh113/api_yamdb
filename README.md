@@ -37,7 +37,7 @@ python3 manage.py migrate
 ```
 - Заполнить БД из CSV:
 ```
-py manage.py load_csv --all
+python3 manage.py load_csv --all
 ```
 - Запустить проект:
 ```

@@ -1,7 +1,9 @@
 from datetime import date
 
-from django.core.validators import MaxValueValidator
+from django.core.exceptions import ValidationError
 
 
-def current_year_max_value_validate():
-    return MaxValueValidator(limit_value=date.today().year)
+def validate_current_year(year):
+    if year > date.today().year:
+        raise ValidationError(
+            f'Год выпуска ({year}) не может быть позже текущего года.')
