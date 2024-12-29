@@ -23,8 +23,11 @@ class Command(BaseCommand):
     help = 'Загрузка данных из CSV-файла'
 
     def add_arguments(self, parser):
-        parser.add_argument('--all', action='store_true',
-                            help='Загружает все CSV-файлы из папки static/data/')
+        parser.add_argument(
+            '--all',
+            action='store_true',
+            help='Загружает все CSV-файлы из папки static/data/'
+        )
 
     def handle(self, *args, **options):
         if options['all']:
@@ -35,7 +38,9 @@ class Command(BaseCommand):
                     self.load_csv(os.path.join(DATA_DIR, filename), model_name)
         else:
             print(
-                "Используйте '--all' для загрузки всех CSV-файлов из папки static/data/")
+                'Используйте "--all" для загрузки всех '
+                'CSV-файлов из папки static/data/'
+            )
 
     def load_csv(self, filepath, model):
         try:
@@ -52,7 +57,10 @@ class Command(BaseCommand):
                         GenreTitle.objects.create(title=title, genre=genre)
                     else:
                         instance, created = model.objects.update_or_create(
-                            id=row['id'], defaults={key: value for key, value in row.items() if key != 'id'})
+                            id=row['id'],
+                            defaults={key: value for key, value
+                                      in row.items() if key != 'id'}
+                        )
                         if created:
                             self.stdout.write(self.style.SUCCESS(
                                 f"Создан объект {instance}"))

@@ -1,5 +1,3 @@
-USERNAME_BAN = 'me'
-
 ADMIN_ROLE = 'admin'
 USER_ROLE = 'user'
 MODERATOR_ROLE = 'moderator'

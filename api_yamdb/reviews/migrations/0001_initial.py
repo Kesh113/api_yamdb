@@ -29,7 +29,7 @@ class Migration(migrations.Migration):
                 ('is_active', models.BooleanField(default=True, help_text='Designates whether this user should be treated as active. Unselect this instead of deleting accounts.', verbose_name='active')),
                 ('date_joined', models.DateTimeField(default=django.utils.timezone.now, verbose_name='date joined')),
                 ('email', models.EmailField(max_length=254, unique=True, verbose_name='Электронная почта')),
-                ('username', models.CharField(error_messages={'unique': 'Пользователь с таким username уже существует.'}, help_text='Обязательное поле. Не более 150 символов. Только буквы, цифры и @/./+/-/_. Слова кроме "me".', max_length=150, unique=True, validators=[reviews.models.UsernameValidator()], verbose_name='Пользовательское')),
+                ('username', models.CharField(error_messages={'unique': 'Пользователь с таким username уже существует.'}, help_text='Обязательное поле. Не более 150 символов. Только буквы, цифры и @/./+/-/_. Слова кроме "me".', max_length=150, unique=True, verbose_name='Пользовательское')),
                 ('first_name', models.CharField(blank=True, max_length=150, verbose_name='Имя')),
                 ('last_name', models.CharField(blank=True, max_length=150, verbose_name='Фамилия')),
                 ('role', models.CharField(choices=[('user', 'Пользователь'), ('moderator', 'Модератор'), ('admin', 'Администратор')], default='user', max_length=9, verbose_name='Роль')),

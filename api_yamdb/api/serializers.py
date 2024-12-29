@@ -1,15 +1,11 @@
 from django.contrib.auth import get_user_model
-from django.contrib.auth.tokens import default_token_generator
-from django.db import IntegrityError
-from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
-from .constants import (
-    INVALID_CONFIRM_CODE, ONLY_ONE_REVIEW,
-    MAX_LENGTH_EMAIL, MAX_LENGTH_USERNAME
+from reviews.constants import (
+    ONLY_ONE_REVIEW, MAX_LENGTH_EMAIL, MAX_LENGTH_USERNAME
 )
 from reviews.models import (
-    Review, Comment, Category, Genre, Title, UsernameValidator
+    Review, Comment, Category, Genre, Title
 )
 
 
@@ -99,19 +95,11 @@ class UserConfirmationSerializer(serializers.Serializer):
     username = serializers.CharField(
         max_length=MAX_LENGTH_USERNAME, required=True
     )
-    confirmation_code = serializers.CharField()
+    confirmation_code = serializers.CharField(required=True)
 
     def validate_username(self, value):
-        UsernameValidator()(value)
+        User._meta.get_field('username').validators[0](value)
         return value
-
-    def validate(self, data):
-        data['user'] = get_object_or_404(User, username=data['username'])
-        if not default_token_generator.check_token(
-            data['user'], data['confirmation_code']
-        ):
-            raise serializers.ValidationError(INVALID_CONFIRM_CODE)
-        return data
 
 
 class UserSignupSerializer(serializers.Serializer):
@@ -121,15 +109,8 @@ class UserSignupSerializer(serializers.Serializer):
     )
 
     def validate_username(self, value):
-        UsernameValidator()(value)
+        User._meta.get_field('username').validators[0](value)
         return value
-
-    def validate(self, data):
-        try:
-            data['user'], _ = User.objects.get_or_create(**data)
-        except IntegrityError as e:
-            raise serializers.ValidationError(e)
-        return data
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -140,7 +121,7 @@ class UserSerializer(serializers.ModelSerializer):
         )
 
     def validate_username(self, value):
-        UsernameValidator()(value)
+        User._meta.get_field('username').validators[0](value)
         return value
 
 
