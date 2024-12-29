@@ -131,3 +131,5 @@ AUTH_USER_MODEL = 'reviews.ReviewsUser'
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 DEFAULT_FROM_EMAIL = 'admin@reviews.com'
+
+USERNAME_USEFUL = 'me'

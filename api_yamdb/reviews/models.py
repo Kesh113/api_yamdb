@@ -1,16 +1,14 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import (
-    MaxValueValidator,
-    RegexValidator, MinValueValidator
+    MaxValueValidator, RegexValidator, MinValueValidator
 )
 from django.db import models
-from django.utils.deconstruct import deconstructible
-from django.utils.translation import gettext_lazy
 
-from api.constants import (
+from .constants import (
     ADMIN_ROLE, MAX_LENGTH_EMAIL, MAX_LENGTH_FIRST_LAST_NAME,
-    MODERATOR_ROLE, USER_ROLE, USERNAME_BAN, MAX_LENGTH_USERNAME,
+    MODERATOR_ROLE, USER_ROLE, MAX_LENGTH_USERNAME,
     MAX_SCORE, MAX_STR_LEN, MIN_SCORE
 )
 from reviews.utils import current_year_max_value_validate
@@ -24,22 +22,16 @@ ROLE_CHOICES = (
 
 USER_ALREADY_EXIST = 'Пользователь с таким username уже существует.'
 
-USERNAME_HELP_TEXT = ('Обязательное поле. Не более 150 символов. Только буквы,'
-                      f' цифры и @/./+/-/_. Слова кроме "{USERNAME_BAN}".')
+USERNAME_HELP_TEXT = ('Обязательное поле. Только буквы,'
+                      ' цифры и @/./+/-/_.')
 
 USERNAME_VALIDATE_MASSAGE = (
     'Введите действительное имя пользователя. '
     'Это значение может содержать только буквы '
-    f'числа, и символы: @/./+/-/_ . Слова кроме "{USERNAME_BAN}".'
+    'числа, и символы: @/./+/-/_ .'
 )
 
-MAX_LENGTH_ROLE = max(map(lambda role: len(role[0]), ROLE_CHOICES))
-
-
-@deconstructible
-class UsernameValidator(RegexValidator):
-    regex = rf'^(?!{USERNAME_BAN}$)[\w.@+-]+\Z'
-    message = gettext_lazy(USERNAME_VALIDATE_MASSAGE)
+USERNAME_REGEX = rf'^(?!{settings.USERNAME_USEFUL}$)[\w.@+-]+\Z'
 
 
 class ReviewsUser(AbstractUser):
@@ -51,12 +43,12 @@ class ReviewsUser(AbstractUser):
     username = models.CharField(
         max_length=MAX_LENGTH_USERNAME,
         unique=True,
-        help_text=gettext_lazy(USERNAME_HELP_TEXT),
-        validators=(UsernameValidator(),),
-        error_messages={
-            'unique': gettext_lazy(USER_ALREADY_EXIST),
-        },
-        verbose_name='Пользовательское'
+        help_text=USERNAME_HELP_TEXT,
+        validators=(RegexValidator(
+            regex=USERNAME_REGEX,
+            message=USERNAME_VALIDATE_MASSAGE
+        ),),
+        verbose_name='Имя пользователя'
     )
     first_name = models.CharField(
         max_length=MAX_LENGTH_FIRST_LAST_NAME,
@@ -69,7 +61,7 @@ class ReviewsUser(AbstractUser):
         verbose_name='Фамилия'
     )
     role = models.CharField(
-        max_length=MAX_LENGTH_ROLE,
+        max_length=max(len(role) for role, _ in ROLE_CHOICES),
         choices=ROLE_CHOICES,
         default=USER_ROLE,
         verbose_name='Роль'
@@ -80,8 +72,8 @@ class ReviewsUser(AbstractUser):
     )
 
     @property
-    def is_admin_or_superuser(self):
-        return (self.role == ADMIN_ROLE or self.is_superuser)
+    def is_admin(self):
+        return (self.role == ADMIN_ROLE or self.is_superuser or self.is_staff)
 
     def __str__(self):
         return f'{self.username[:21]}, роль - {self.role}'

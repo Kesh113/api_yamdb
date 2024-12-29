@@ -2,6 +2,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
+from django.db import IntegrityError
 from django.db.models import Avg
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
@@ -12,7 +13,6 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
 
-from .constants import MESSAGE, SUBJECT
 from .permissions import (
     IsAdminModeratorAuthorOrReadOnly, IsAdminOrReadOnly, IsAdmin
 )
@@ -22,7 +22,9 @@ from .serializers import (
     TitleReadSerializer, TitleWriteSerializer, UserSerializer,
     UserProfileSerializer, UserSignupSerializer, UserConfirmationSerializer
 )
+from reviews.constants import INVALID_CONFIRM_CODE, MESSAGE, SUBJECT
 from reviews.models import (Title, Genre, Category, Review)
+
 
 User = get_user_model()
 
@@ -129,7 +131,7 @@ class UsersView(viewsets.ModelViewSet):
     @action(
         detail=False,
         methods=['get', 'patch'],
-        url_path='me',
+        url_path=settings.USERNAME_USEFUL,
         permission_classes=(IsAuthenticated,)
     )
     def user_profile(self, request):
@@ -138,26 +140,26 @@ class UsersView(viewsets.ModelViewSet):
                 UserProfileSerializer(request.user).data,
                 status=status.HTTP_200_OK
             )
-        else:
-            serializer = UserProfileSerializer(
-                request.user, data=request.data, partial=True
-            )
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
+        serializer = UserProfileSerializer(
+            request.user, data=request.data, partial=True
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def signup_or_update(request):
     serializer = UserSignupSerializer(data=request.data)
-
     serializer.is_valid(raise_exception=True)
     data = serializer.validated_data
-
+    try:
+        user, _ = User.objects.get_or_create(**data)
+    except IntegrityError:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
     # Генерируем код подтверждения и создаем для него токен
-    confirmation_code = default_token_generator.make_token(data['user'])
-
+    confirmation_code = default_token_generator.make_token(user)
     # Отправляем код подтверждения по электронной почте
     send_mail(
         subject=SUBJECT,
@@ -165,7 +167,6 @@ def signup_or_update(request):
         from_email=settings.DEFAULT_FROM_EMAIL,
         recipient_list=[data['email']]
     )
-
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -173,9 +174,16 @@ def signup_or_update(request):
 @permission_classes([AllowAny])
 def confirmation(request):
     serializer = UserConfirmationSerializer(data=request.data)
-
     serializer.is_valid(raise_exception=True)
-
+    data = serializer.validated_data
+    user = get_object_or_404(User, username=data['username'])
+    if not default_token_generator.check_token(
+        user, data['confirmation_code']
+    ):
+        return Response(
+            {'confirmation_code': INVALID_CONFIRM_CODE},
+            status=status.HTTP_400_BAD_REQUEST
+        )
     return Response(
         {'token': str(AccessToken.for_user(
             serializer.validated_data['user']

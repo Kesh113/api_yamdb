@@ -21,10 +21,11 @@ v1_router.register(r'titles/(?P<title_id>\d+)'
 v1_router.register(r'users', UsersView, basename='users')
 
 auth_urls = [
-    path('v1/auth/signup/', signup_or_update, name='signup'),
-    path('v1/auth/token/', confirmation, name='token'),
+    path('signup/', signup_or_update, name='signup'),
+    path('token/', confirmation, name='token'),
 ]
 
 urlpatterns = [
+    path('v1/auth/', include(auth_urls)),
     path('v1/', include(v1_router.urls)),
-] + auth_urls
+]
