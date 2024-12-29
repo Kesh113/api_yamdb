@@ -19,7 +19,7 @@ from .permissions import (
 from .filters import TitleFilter
 from .serializers import (
     ReviewSerializer, CommentSerializer, CategorySerializer, GenreSerializer,
-    TitleReadSerializer, TitleBaseModelSerializer, UserSerializer,
+    TitleReadSerializer, TitleWriteSerializer, UserSerializer,
     UserProfileSerializer, UserSignupSerializer, UserConfirmationSerializer
 )
 from reviews.models import (Title, Genre, Category, Review)
@@ -53,8 +53,6 @@ class GenreViewSet(CategoryGenreBaseViewSet):
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all().annotate(
         rating=Avg('reviews__score')).order_by('-rating')
-    read_only_serializer_class = TitleReadSerializer
-    write_serializer_class = TitleBaseModelSerializer
     permission_classes = IsAdminOrReadOnly,
     filter_backends = DjangoFilterBackend, filters.OrderingFilter
     filterset_class = TitleFilter
@@ -65,9 +63,9 @@ class TitleViewSet(viewsets.ModelViewSet):
 
     def get_serializer_class(self):
         if self.action in ['list', 'retrieve']:
-            return self.read_only_serializer_class
+            return TitleReadSerializer
         else:
-            return self.write_serializer_class
+            return TitleWriteSerializer
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
