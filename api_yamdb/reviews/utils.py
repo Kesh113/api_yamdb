@@ -17,9 +17,10 @@ USERNAME_VALIDATE_MASSAGE = (
 
 
 def validate_current_year(year):
-    if year > date.today().year:
-        raise ValidationError(
-            f'Год выпуска ({year}) не может быть позже текущего года.')
+    if year < date.today().year:
+        return year
+    raise ValidationError(
+        f'Год выпуска ({year}) не может быть позже текущего года.')
 
 
 def validate_username(username: str):
