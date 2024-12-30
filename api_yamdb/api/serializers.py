@@ -88,28 +88,32 @@ class CommentSerializer(serializers.ModelSerializer):
         fields = 'id', 'author', 'text', 'pub_date'
 
 
-class UsernameSerializer(serializers.Serializer):
-    username = serializers.CharField(
-        max_length=MAX_LENGTH_USERNAME, required=True
-    )
-
+class ValidateUsernameMixin:
     def validate_username(self, value):
         for validator in User._meta.get_field('username').validators:
             validator(value)
         return value
 
 
-class UserConfirmationSerializer(UsernameSerializer):
+class UserConfirmationSerializer(
+    serializers.Serializer, ValidateUsernameMixin
+):
+    username = serializers.CharField(
+        max_length=MAX_LENGTH_USERNAME, required=True
+    )
     confirmation_code = serializers.CharField(
         max_length=MAX_LEN_CODE, required=True
     )
 
 
-class UserSignupSerializer(UsernameSerializer):
+class UserSignupSerializer(serializers.Serializer, ValidateUsernameMixin):
+    username = serializers.CharField(
+        max_length=MAX_LENGTH_USERNAME, required=True
+    )
     email = serializers.EmailField(max_length=MAX_LENGTH_EMAIL, required=True)
 
 
-class UserSerializer(serializers.ModelSerializer):
+class UserSerializer(serializers.ModelSerializer, ValidateUsernameMixin):
     class Meta:
         model = User
         fields = (

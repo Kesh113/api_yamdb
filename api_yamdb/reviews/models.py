@@ -62,7 +62,7 @@ class ReviewsUser(AbstractUser):
 
     @property
     def is_admin(self):
-        return (self.role == ADMIN_ROLE or self.is_staff)
+        return self.role == ADMIN_ROLE or self.is_staff
 
     def __str__(self):
         return f'{self.username[:21]}, роль - {self.role}'

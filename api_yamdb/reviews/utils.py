@@ -4,16 +4,16 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 
-from reviews.constants import ALREADY_EXIST_FIELD
-
 
 USERNAME_REGEX = r'^[\w.@+-]+\Z'
 
-USERNAME_VALIDATE_MASSAGE = (
+USERNAME_VALIDATE_MESSAGE = (
     'Введите действительное имя пользователя. '
     'Это значение может содержать только буквы '
     'числа, и символы: @/./+/-/_ .'
 )
+
+FORBIDDEN_USE = 'Использовать имя "{}" в качестве username запрещено.'
 
 
 def validate_current_year(year):
@@ -26,9 +26,10 @@ def validate_current_year(year):
 def validate_username(username: str):
     RegexValidator(
         regex=USERNAME_REGEX,
-        message=USERNAME_VALIDATE_MASSAGE
+        message=USERNAME_VALIDATE_MESSAGE
     )(username)
-    if username == settings.USERNAME:
+    if username == settings.USERNAME_RESERVED:
         raise ValidationError(
-            {'username': ALREADY_EXIST_FIELD.format(settings.USERNAME)}
+            {'username': FORBIDDEN_USE.format(settings.USERNAME_RESERVED)}
         )
+    return username

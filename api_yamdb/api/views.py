@@ -24,7 +24,7 @@ from .serializers import (
     UserProfileSerializer, UserSignupSerializer, UserConfirmationSerializer
 )
 from reviews.constants import (
-    ALREADY_EXIST_FIELD, INVALID_CONFIRM_CODE, MESSAGE, SUBJECT
+    ALREADY_EXIST_FIELD, INVALID_CONFIRM_CODE, LENGTH_CODE, MESSAGE, SUBJECT
 )
 from reviews.models import (Title, Genre, Category, Review)
 
@@ -133,7 +133,7 @@ class UsersView(viewsets.ModelViewSet):
     @action(
         detail=False,
         methods=['get', 'patch'],
-        url_path=settings.USERNAME,
+        url_path=settings.USERNAME_RESERVED,
         permission_classes=(IsAuthenticated,)
     )
     def user_profile(self, request):
@@ -159,13 +159,18 @@ def signup_or_update(request):
     try:
         user, _ = User.objects.get_or_create(**data)
     except IntegrityError as error:
-        for field in ['username', 'email']:
-            if field in str(error):
-                raise ValidationError(
-                    {field: ALREADY_EXIST_FIELD.format(field)}
-                )
+        if 'username' in str(error):
+            raise ValidationError(
+                {'username': ALREADY_EXIST_FIELD.format('username')}
+            )
+        raise ValidationError(
+            {'email': ALREADY_EXIST_FIELD.format('email')}
+        )
     # Генерируем код подтверждения и сохраняем пользователю
-    confirmation_code = f'{random.randrange(1000000):06d}'
+    confirmation_code = ''.join(random.choices(
+        settings.VALID_CHARS_CODE,
+        k=LENGTH_CODE)
+    )
     user.confirmation_code = confirmation_code
     user.save()
     # Отправляем код подтверждения по электронной почте
@@ -185,8 +190,11 @@ def confirmation(request):
     serializer.is_valid(raise_exception=True)
     data = serializer.validated_data
     user = get_object_or_404(User, username=data['username'])
+    # Отбираем возможность повторной проверки кода
+    confirmation_code, user.confirmation_code = user.confirmation_code, ''
+    user.save()
     # Если код подтверждения совпал генерируем токен пользователю
-    if user.confirmation_code != data['confirmation_code']:
+    if confirmation_code != data['confirmation_code']:
         raise ValidationError({'confirmation_code': INVALID_CONFIRM_CODE})
     return Response(
         {'token': str(AccessToken.for_user(user))}, status=status.HTTP_200_OK
