@@ -1,6 +1,7 @@
+import random
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.auth.tokens import default_token_generator
+from rest_framework.exceptions import ValidationError
 from django.core.mail import send_mail
 from django.db import IntegrityError
 from django.db.models import Avg
@@ -22,7 +23,9 @@ from .serializers import (
     TitleReadSerializer, TitleWriteSerializer, UserSerializer,
     UserProfileSerializer, UserSignupSerializer, UserConfirmationSerializer
 )
-from reviews.constants import INVALID_CONFIRM_CODE, MESSAGE, SUBJECT
+from reviews.constants import (
+    ALREADY_EXIST_FIELD, INVALID_CONFIRM_CODE, MESSAGE, SUBJECT
+)
 from reviews.models import (Title, Genre, Category, Review)
 
 
@@ -131,13 +134,13 @@ class UsersView(viewsets.ModelViewSet):
     @action(
         detail=False,
         methods=['get', 'patch'],
-        url_path=settings.USERNAME_USEFUL,
+        url_path=settings.USERNAME,
         permission_classes=(IsAuthenticated,)
     )
     def user_profile(self, request):
         if request.method == 'GET':
             return Response(
-                UserProfileSerializer(request.user).data,
+                UserSerializer(request.user).data,
                 status=status.HTTP_200_OK
             )
         serializer = UserProfileSerializer(
@@ -156,10 +159,16 @@ def signup_or_update(request):
     data = serializer.validated_data
     try:
         user, _ = User.objects.get_or_create(**data)
-    except IntegrityError:
-        return Response(status=status.HTTP_400_BAD_REQUEST)
-    # Генерируем код подтверждения и создаем для него токен
-    confirmation_code = default_token_generator.make_token(user)
+    except IntegrityError as error:
+        for field in ['username', 'email']:
+            if field in str(error):
+                raise ValidationError(
+                    {field: ALREADY_EXIST_FIELD.format(field)}
+                )
+    # Генерируем код подтверждения и сохраняем пользователю
+    confirmation_code = f'{random.randrange(1000000):06d}'
+    user.confirmation_code = confirmation_code
+    user.save()
     # Отправляем код подтверждения по электронной почте
     send_mail(
         subject=SUBJECT,
@@ -177,15 +186,9 @@ def confirmation(request):
     serializer.is_valid(raise_exception=True)
     data = serializer.validated_data
     user = get_object_or_404(User, username=data['username'])
-    if not default_token_generator.check_token(
-        user, data['confirmation_code']
-    ):
-        return Response(
-            {'confirmation_code': INVALID_CONFIRM_CODE},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+    # Если код подтверждения совпал генерируем токен пользователю
+    if user.confirmation_code != data['confirmation_code']:
+        raise ValidationError({'confirmation_code': INVALID_CONFIRM_CODE})
     return Response(
-        {'token': str(AccessToken.for_user(
-            serializer.validated_data['user']
-        ))}, status=status.HTTP_200_OK
+        {'token': str(AccessToken.for_user(user))}, status=status.HTTP_200_OK
     )

@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 from reviews.constants import (
-    ONLY_ONE_REVIEW, MAX_LENGTH_EMAIL, MAX_LENGTH_USERNAME
+    MAX_LEN_CODE, ONLY_ONE_REVIEW, MAX_LENGTH_EMAIL, MAX_LENGTH_USERNAME
 )
 from reviews.models import (
     Review, Comment, Category, Genre, Title
@@ -89,26 +89,25 @@ class CommentSerializer(serializers.ModelSerializer):
         fields = 'id', 'author', 'text', 'pub_date'
 
 
-class UserConfirmationSerializer(serializers.Serializer):
+class UsernameSerializer(serializers.Serializer):
     username = serializers.CharField(
         max_length=MAX_LENGTH_USERNAME, required=True
     )
-    confirmation_code = serializers.CharField(required=True)
 
     def validate_username(self, value):
-        User._meta.get_field('username').validators[0](value)
+        for validator in User._meta.get_field('username').validators:
+            validator(value)
         return value
 
 
-class UserSignupSerializer(serializers.Serializer):
+class UserConfirmationSerializer(UsernameSerializer):
+    confirmation_code = serializers.CharField(
+        max_length=MAX_LEN_CODE, required=True
+    )
+
+
+class UserSignupSerializer(UsernameSerializer):
     email = serializers.EmailField(max_length=MAX_LENGTH_EMAIL, required=True)
-    username = serializers.CharField(
-        max_length=MAX_LENGTH_USERNAME, required=True
-    )
-
-    def validate_username(self, value):
-        User._meta.get_field('username').validators[0](value)
-        return value
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -117,10 +116,6 @@ class UserSerializer(serializers.ModelSerializer):
         fields = (
             'username', 'email', 'first_name', 'last_name', 'bio', 'role'
         )
-
-    def validate_username(self, value):
-        User._meta.get_field('username').validators[0](value)
-        return value
 
 
 class UserProfileSerializer(UserSerializer):

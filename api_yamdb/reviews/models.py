@@ -1,17 +1,16 @@
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import (
-    MaxValueValidator, RegexValidator, MinValueValidator
+    MaxValueValidator, MinValueValidator
 )
 from django.db import models
 
 from .constants import (
-    ADMIN_ROLE, MAX_LENGTH_EMAIL, MAX_LENGTH_FIRST_LAST_NAME,
+    ADMIN_ROLE, MAX_LEN_CODE, MAX_LENGTH_EMAIL, MAX_LENGTH_FIRST_LAST_NAME,
     MODERATOR_ROLE, USER_ROLE, MAX_LENGTH_USERNAME,
     MAX_SCORE, MAX_STR_LEN, MIN_SCORE
 )
-from reviews.utils import validate_current_year
+from reviews.utils import validate_current_year, validate_username
 
 
 ROLE_CHOICES = (
@@ -20,18 +19,8 @@ ROLE_CHOICES = (
     (ADMIN_ROLE, 'Администратор')
 )
 
-USER_ALREADY_EXIST = 'Пользователь с таким username уже существует.'
-
 USERNAME_HELP_TEXT = ('Обязательное поле. Только буквы,'
                       ' цифры и @/./+/-/_.')
-
-USERNAME_VALIDATE_MASSAGE = (
-    'Введите действительное имя пользователя. '
-    'Это значение может содержать только буквы '
-    'числа, и символы: @/./+/-/_ .'
-)
-
-USERNAME_REGEX = rf'^(?!{settings.USERNAME_USEFUL}$)[\w.@+-]+\Z'
 
 
 class ReviewsUser(AbstractUser):
@@ -44,10 +33,7 @@ class ReviewsUser(AbstractUser):
         max_length=MAX_LENGTH_USERNAME,
         unique=True,
         help_text=USERNAME_HELP_TEXT,
-        validators=(RegexValidator(
-            regex=USERNAME_REGEX,
-            message=USERNAME_VALIDATE_MASSAGE
-        ),),
+        validators=(validate_username,),
         verbose_name='Логин'
     )
     first_name = models.CharField(
@@ -70,10 +56,13 @@ class ReviewsUser(AbstractUser):
         blank=True,
         verbose_name='О себе'
     )
+    confirmation_code = models.CharField(
+        max_length=MAX_LEN_CODE, blank=True, verbose_name='Код подтверждения'
+    )
 
     @property
     def is_admin(self):
-        return (self.role == ADMIN_ROLE or self.is_superuser or self.is_staff)
+        return (self.role == ADMIN_ROLE or self.is_staff)
 
     def __str__(self):
         return f'{self.username[:21]}, роль - {self.role}'
