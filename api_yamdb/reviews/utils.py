@@ -20,7 +20,9 @@ def validate_current_year(year):
     if year < date.today().year:
         return year
     raise ValidationError(
-        f'Год выпуска ({year}) не может быть позже текущего года.')
+        f'Год выпуска ({year}) не может быть позже '
+        f'текущего года({date.today().year}).'
+    )
 
 
 def validate_username(username: str):

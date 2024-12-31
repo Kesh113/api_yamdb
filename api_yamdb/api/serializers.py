@@ -35,9 +35,7 @@ class TitleReadSerializer(serializers.ModelSerializer):
             'id', 'name', 'year', 'rating',
             'description', 'genre', 'category'
         )
-        read_only_fields = (
-            '__all__',
-        )
+        read_only_fields = fields
 
 
 class TitleWriteSerializer(serializers.ModelSerializer):
@@ -59,6 +57,9 @@ class TitleWriteSerializer(serializers.ModelSerializer):
             'id', 'name', 'year', 'rating',
             'description', 'genre', 'category'
         )
+
+    # def to_representation(self, instance):
+    #     return TitleReadSerializer(instance).data
 
 
 class ReviewSerializer(serializers.ModelSerializer):
