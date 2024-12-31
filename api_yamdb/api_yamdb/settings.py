@@ -132,6 +132,10 @@ AUTH_USER_MODEL = 'reviews.ReviewsUser'
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 DEFAULT_FROM_EMAIL = 'admin@reviews.com'
 
+
 USERNAME_RESERVED = 'me'
 
+
 VALID_CHARS_CODE = '0123456789'
+LENGTH_CODE = 6
+RESERVED_CODE = 'z' * LENGTH_CODE

@@ -1,8 +1,9 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 from reviews.constants import (
-    MAX_LEN_CODE, ONLY_ONE_REVIEW, MAX_LENGTH_EMAIL, MAX_LENGTH_USERNAME
+    MAX_LENGTH_EMAIL, MAX_LENGTH_USERNAME
 )
 from reviews.models import (
     Review, Comment, Category, Genre, Title
@@ -10,6 +11,8 @@ from reviews.models import (
 
 
 User = get_user_model()
+
+ONLY_ONE_REVIEW = 'Можно оставить только один отзыв на произведение'
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -102,7 +105,7 @@ class UserConfirmationSerializer(
         max_length=MAX_LENGTH_USERNAME, required=True
     )
     confirmation_code = serializers.CharField(
-        max_length=MAX_LEN_CODE, required=True
+        max_length=settings.LENGTH_CODE, required=True
     )
 
 

@@ -1,9 +1,9 @@
 import random
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.db import IntegrityError
 from rest_framework.exceptions import ValidationError
 from django.core.mail import send_mail
-from django.db import IntegrityError
 from django.db.models import Avg
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
@@ -23,13 +23,15 @@ from .serializers import (
     TitleReadSerializer, TitleWriteSerializer, UserSerializer,
     UserProfileSerializer, UserSignupSerializer, UserConfirmationSerializer
 )
-from reviews.constants import (
-    ALREADY_EXIST_FIELD, INVALID_CONFIRM_CODE, LENGTH_CODE, MESSAGE, SUBJECT
-)
-from reviews.models import (Title, Genre, Category, Review)
+from reviews.constants import MESSAGE, SUBJECT
+from reviews.models import Title, Genre, Category, Review
 
 
 User = get_user_model()
+
+INVALID_CONFIRM_CODE = 'Неверный код подтверждения.'
+
+ALREADY_EXIST_FIELD = 'Этот {} уже занят.'
 
 
 class CategoryGenreBaseViewSet(
@@ -158,18 +160,19 @@ def signup_or_update(request):
     data = serializer.validated_data
     try:
         user, _ = User.objects.get_or_create(**data)
-    except IntegrityError as error:
-        if 'username' in str(error):
+    except IntegrityError:
+        if User.objects.filter(username=data['username']).exists():
             raise ValidationError(
                 {'username': ALREADY_EXIST_FIELD.format('username')}
             )
-        raise ValidationError(
-            {'email': ALREADY_EXIST_FIELD.format('email')}
-        )
+        elif User.objects.filter(email=data['email']).exists():
+            raise ValidationError(
+                {'email': ALREADY_EXIST_FIELD.format('email')}
+            )
     # Генерируем код подтверждения и сохраняем пользователю
     confirmation_code = ''.join(random.choices(
         settings.VALID_CHARS_CODE,
-        k=LENGTH_CODE)
+        k=settings.LENGTH_CODE)
     )
     user.confirmation_code = confirmation_code
     user.save()
@@ -190,9 +193,14 @@ def confirmation(request):
     serializer.is_valid(raise_exception=True)
     data = serializer.validated_data
     user = get_object_or_404(User, username=data['username'])
+    # Проверяем генерировался ли код для пользователя
+    if user.confirmation_code == settings.RESERVED_CODE:
+        raise ValidationError({'confirmation_code': INVALID_CONFIRM_CODE})
     # Отбираем возможность повторной проверки кода
-    confirmation_code, user.confirmation_code = user.confirmation_code, ''
-    user.save()
+    confirmation_code = user.confirmation_code
+    if user.confirmation_code != settings.RESERVED_CODE:
+        user.confirmation_code = settings.RESERVED_CODE
+        user.save()
     # Если код подтверждения совпал генерируем токен пользователю
     if confirmation_code != data['confirmation_code']:
         raise ValidationError({'confirmation_code': INVALID_CONFIRM_CODE})
