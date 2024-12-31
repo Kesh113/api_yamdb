@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import (
@@ -6,7 +7,7 @@ from django.core.validators import (
 from django.db import models
 
 from .constants import (
-    ADMIN_ROLE, MAX_LEN_CODE, MAX_LENGTH_EMAIL, MAX_LENGTH_FIRST_LAST_NAME,
+    ADMIN_ROLE, MAX_LENGTH_EMAIL, MAX_LENGTH_FIRST_LAST_NAME,
     MODERATOR_ROLE, USER_ROLE, MAX_LENGTH_USERNAME,
     MAX_SCORE, MAX_STR_LEN, MIN_SCORE
 )
@@ -57,7 +58,9 @@ class ReviewsUser(AbstractUser):
         verbose_name='О себе'
     )
     confirmation_code = models.CharField(
-        max_length=MAX_LEN_CODE, blank=True, verbose_name='Код подтверждения'
+        max_length=settings.LENGTH_CODE,
+        default=settings.RESERVED_CODE,
+        verbose_name='Код подтверждения'
     )
 
     @property

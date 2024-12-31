@@ -5,15 +5,16 @@ from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 
 
-USERNAME_REGEX = r'^[\w.@+-]+\Z'
-
-USERNAME_VALIDATE_MESSAGE = (
-    'Введите действительное имя пользователя. '
-    'Это значение может содержать только буквы '
-    'числа, и символы: @/./+/-/_ .'
-)
-
 FORBIDDEN_USE = 'Использовать имя "{}" в качестве username запрещено.'
+
+username_validator = RegexValidator(
+    regex=r'^[\w.@+-]+\Z',
+    message=(
+        'Введите действительное имя пользователя. '
+        'Это значение может содержать только буквы '
+        'числа, и символы: @/./+/-/_ .'
+    )
+)
 
 
 def validate_current_year(year):
@@ -26,10 +27,7 @@ def validate_current_year(year):
 
 
 def validate_username(username: str):
-    RegexValidator(
-        regex=USERNAME_REGEX,
-        message=USERNAME_VALIDATE_MESSAGE
-    )(username)
+    username_validator(username)
     if username == settings.USERNAME_RESERVED:
         raise ValidationError(
             {'username': FORBIDDEN_USE.format(settings.USERNAME_RESERVED)}
