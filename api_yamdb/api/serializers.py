@@ -42,7 +42,8 @@ class TitleReadSerializer(serializers.ModelSerializer):
 
 
 class TitleWriteSerializer(serializers.ModelSerializer):
-    rating = serializers.IntegerField(read_only=True)
+    # FIX
+    # rating = serializers.IntegerField(read_only=True)
     genre = serializers.SlugRelatedField(
         many=True,
         slug_field='slug',
@@ -57,11 +58,24 @@ class TitleWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Title
         fields = (
-            'id', 'name', 'year', 'rating',
+            'id', 'name', 'year',
+            # FIX
+            # 'rating',
             'description', 'genre', 'category'
         )
 
+    def to_representation(self, instance):
+        repr = super().to_representation(instance)
+        print('1  ', repr)
+        # Все на месте, ratings на месте, можно возращать.
+        # А работает все, как надо, потому что для получения данных
+        # self.get_queryset используется, а там у нас живет аннотация.
+        data = TitleReadSerializer(instance).data
+        print('2  ', data)
+        return data
+
     # def to_representation(self, instance):
+    #     repr = s
     #     return TitleReadSerializer(instance).data
 
 
